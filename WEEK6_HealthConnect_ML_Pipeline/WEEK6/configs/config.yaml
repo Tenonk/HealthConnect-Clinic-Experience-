@@ -1,0 +1,88 @@
+# HealthConnect ML Pipeline Configuration - Week 6
+# Integrated Pipeline Configuration
+
+project:
+  name: HealthConnect No-Show Prediction
+  version: "6.0.0"
+  track: Machine Learning Engineering
+  week: 6
+
+data:
+  raw_path: "data/raw/HealthConnect_Appointment_Data.csv"
+  processed_dir: "data/processed"
+  target_column: "appointment_outcome"
+  id_columns:
+    - appointment_id
+    - patient_id
+  date_columns:
+    - booking_date
+    - appointment_date
+
+preprocessing:
+  temporal_split_ratio: 0.8
+  target_mapping:
+    "No-Show": 0
+    "Attended": 1
+    "Cancelled": 0  # Merged into No-Show as per Week 5 decision
+  lead_bins: [0, 7, 30, 90, .inf]
+  lead_labels:
+    - "Last minute (0-7d)"
+    - "Short term (8-30d)"
+    - "Medium term (31-90d)"
+    - "Long term (90d+)"
+  numeric_features:
+    - age
+    - booking_lead_days
+    - previous_appointments
+    - distance_to_clinic_km
+    - waiting_time_minutes
+  # previous_no_shows is kept as passthrough (not scaled)
+  categorical_features:
+    - gender
+    - age_group
+    - appointment_type
+    - appointment_day
+    - appointment_time
+    - reminder_sent
+    - reminder_channel
+    - lead_cat_temp
+    - booking_month
+    - appointment_month
+    - booking_day
+
+model:
+  models_dir: "models"
+  candidate_models:
+    - decision_tree
+    - random_forest
+  default_model: "decision_tree"
+  decision_threshold: 0.5
+
+validation:
+  required_columns:
+    - gender
+    - age
+    - appointment_type
+    - booking_date
+    - appointment_date
+    - booking_lead_days
+    - previous_appointments
+    - previous_no_shows
+    - reminder_sent
+    - distance_to_clinic_km
+    - waiting_time_minutes
+  min_rows: 10
+  max_missing_ratio: 0.3
+
+logging:
+  level: INFO
+  format: "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+  file: "logs/pipeline.log"
+
+paths:
+  models:
+    transformer: "models/column_transformer.pkl"
+    decision_tree: "models/decision_tree.pkl"
+    random_forest: "models/random_forest.pkl"
+  logs_dir: "logs"
+  reports_dir: "docs"
